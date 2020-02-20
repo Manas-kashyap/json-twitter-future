@@ -16,26 +16,26 @@ case class Company(name: String, catchPhrase: String, bs: String)
 case class User(id: String, name: String, username: String, email: String, address: Address, phone: String, website: String, company: Company)
 
 
-class JsonParsingUser extends ReadJsonData {
+object JsonParsingUsers extends ReadJsonData {
 
-  def getAllUsers: List[User] = {
+  def getAllUsers : Future[List[User]] = {
     val url = "https://jsonplaceholder.typicode.com/users"
 
     val jsonData: Future[String] = Future {
       readData(url)
     }
-    val parsedJsonData = for {
+    val allUsersFallback : Future[List[User]] = Future{ List.empty[User] }
+
+    val parsedJsonData: Future[List[User]] = for {
       jsonUserData <- jsonData
-      parsedJsonData <- Future(JsonDataParsingUsers.parse(jsonUserData))
+      parsedJsonData <- Future(parse(jsonUserData))
     } yield parsedJsonData
-    val userData = Await.result(parsedJsonData, 10.seconds)
-    userData
+
+    val allUsers = parsedJsonData fallbackTo allUsersFallback
+
+    allUsers
 
   }
-}
-
-
-object JsonDataParsingUsers  {
 
   implicit val formats: DefaultFormats.type = DefaultFormats
 
@@ -44,28 +44,7 @@ object JsonDataParsingUsers  {
 
     parsedJsonData.children map { user =>
 
-      val id = (user \ "id").extract[String]
-      val name = (user \ "name").extract[String]
-      val username = (user \ "username").extract[String]
-      val email = (user \ "email").extract[String]
-      val street = (user \ "address" \ "street").extract[String]
-      val suite = (user \ "address" \ "suite").extract[String]
-      val city = (user \ "address" \ "city").extract[String]
-      val zipcode = (user \ "address" \ "zipcode").extract[String]
-      val lat = (user \ "address" \ "geo" \ "lat").extract[String]
-      val lng = (user \ "address" \ "geo" \ "lng").extract[String]
-      val phone = (user \ "phone").extract[String]
-      val website = (user \ "website").extract[String]
-      val companyName = (user \ "company" \ "name").extract[String]
-      val catchPhrase = (user \ "company" \ "catchPhrase").extract[String]
-      val bs = (user \ "company" \ "bs").extract[String]
-      User(id, name, username, email, Address(street, suite, city, zipcode, Geo(lat, lng)), phone, website, Company(companyName, catchPhrase, bs))
+      user.extract[User]
     }
   }
-
-  implicit def extract(json: JValue): String = json match {
-    case JNothing => ""
-    case data => data.extract[String]
-  }
 }
-
