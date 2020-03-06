@@ -9,7 +9,7 @@ class ReadJsonDataSpec extends AsyncFlatSpec {
   behavior of "readData"
   it should "fetch the json data from the specified url" in {
     val actualString = ReadJsonData.readData("https://jsonplaceholder.typicode.com/users")
-    val expectedString = Source.fromFile("./src/test/resources/testJsonDataUsers").mkString
+    val expectedString = Source.fromFile("./src/test/scala/com/knoldus/resources/testJsonDataUsers").mkString
     assert(expectedString.trim == actualString.trim)
   }
 
